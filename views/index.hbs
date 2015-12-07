@@ -1,0 +1,145 @@
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-2.1.4.min.js"></script>
+<script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.14.0/jquery.validate.min.js"></script>
+<div class="container">
+    <div class="row">
+        <div class="col-xs-12">
+            <h1>Make a Fiftyfifty</h1>
+        </div>
+    </div>
+    {{#if errors}}
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="panel panel-danger">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Error</h3>
+                </div>
+                <div class="panel-body">
+                    Please correct the following errors:
+                    <ul>
+                        {{#each errors}}
+                            <li>{{.}}</li>
+                        {{/each}}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{/if}}
+    <div class="row">
+        <div class="col-xs-12">
+            <p>A Fiftyfifty is a page that will show one of two videos at random. Enter two videos now to make your own!</p>
+        </div>
+    </div>
+    <form id="postvid" method="post" class="form-horizontal">
+        <div class="form-group">
+            <label for="title" class="control-label col-sm-2">Title</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="title" name="title" placeholder="Title" maxlength="60" value="{{vidstitle}}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="vida" class="control-label col-sm-2">First Video URL</label>
+            <div class="col-lg-7 col-sm-6">
+                <input type="text" class="form-control" id="vida" name="vida" placeholder="First Video" value="{{vida}}">
+                <p class="help-block">Currently, only YouTube is supported.</p>
+            </div>
+            <label for="timea" class="control-label col-lg-1 col-sm-2">Start time</label>
+            <div class="col-sm-2">
+                <input type="text" class="form-control" id="timea" name="timea" placeholder="0:00" value="{{timea}}">
+                <p class="help-block">Optional</p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="vidb" class="control-label col-sm-2">Second Video URL</label>
+            <div class="col-lg-7 col-sm-6">
+                <input type="text" class="form-control" id="vidb" name="vidb" placeholder="Second Video" value="{{vidb}}">
+            </div>
+            <label for="timeb" class="control-label col-lg-1 col-sm-2">Start time</label>
+            <div class="col-sm-2">
+                <input type="text" class="form-control" id="timeb" name="timeb" placeholder="0:00" value="{{timeb}}">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-default">Submit</button>
+            </div>
+        </div>
+    </form>
+</div>
+<script>
+    $( function() {
+        jQuery.validator.addMethod("ytURL", function(value, element) {
+            var valid = this.optional(element) || /youtube.+[&?]v=([A-Za-z0-9_-]{11})/.test(value) || /youtu\.be\/([A-Za-z0-9_-]{11})/.test(value) || /youtube.+%3Fv%3D([A-Za-z0-9_-]{11})/.test(value);
+            if(valid) {
+                var timeID = element.id === "vida" ? "#timea" : "#timeb";
+                var startTime = value.match(/[&?]t=(\d{1,2}h)?(\d{1,2}m)?(\d*)/);
+
+                if(startTime) {
+                    var seconds = 0;
+                    if(startTime[1]) {
+                        seconds = parseInt(startTime[1]) * 3600;
+                    }
+                    if(startTime[2]) {
+                        seconds += parseInt(startTime[2]) * 60;
+                    }
+                    if(startTime[3]) {
+                        seconds += parseInt(startTime[3]);
+                    }
+                    var displayTime = Math.floor(seconds / 60) + ":" + ((seconds % 60 > 9) ? (seconds % 60) : "0" + (seconds % 60));
+                    $(timeID).val(displayTime).attr("readonly", 1);
+                }
+                else {
+                    if($(timeID).attr("readonly")){ $(timeID).val("").removeAttr("readonly"); }
+                }
+            }
+            return valid;
+        });
+
+        jQuery.validator.addMethod("timeFormat", function(value, element) {
+            return /\d+:\d\d/.test(value) || value.length === 0;
+        });
+
+        $("#postvid").validate({
+            errorClass: 'has-error',
+            highlight: function(element, errorClass, validClass) {
+                $(element.parentElement).addClass(errorClass).removeClass(validClass);
+            },
+            unhighlight: function(element, errorClass, validClass) {
+                $(element.parentElement).addClass(validClass).removeClass(errorClass);
+            },
+            rules: {
+                title: {
+                    required: true
+                },
+                vida: {
+                    required: true,
+                    ytURL: true
+                },
+                vidb: {
+                    required: true,
+                    ytURL: true
+                },
+                timea: {
+                    timeFormat: true
+                },
+                timeb: {
+                    timeFormat: true
+                }
+            },
+            messages: {
+                vida: {
+                    ytURL: "Please enter a YouTube video URL."
+                },
+                vidb: {
+                    ytURL: "Please enter a YouTube video URL."
+                },
+                timea: {
+                    timeFormat: "Please enter time as mm:ss"
+                },
+                timeb: {
+                    timeFormat: "Please enter time as mm:ss"
+                }
+            }
+        });
+    });
+</script>

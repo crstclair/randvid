@@ -1,0 +1,15 @@
+<!-- Go to www.addthis.com/dashboard to customize your tools -->
+<script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-564cd407f8bf3309" async="async"></script>
+<div class="container">
+    <div class="row">
+        <div class="videoTop col-xs-12">
+            <h1>{{title}}</h1>
+            <div class="videoContainer">
+                <iframe width="560" height="349" src="https://www.youtube.com/embed/{{vidID}}?rel=0&amp;showinfo=0&amp;autoplay=1{{#if startTime}}&amp;start={{startTime}}{{/if}}" frameborder="0" allowfullscreen></iframe>
+            </div>
+            <p>This is one of two videos, selected randomly. <a href="/~{{vidSet}}/{{alt}}">Watch the other video.</a></p>
+            <p><a href="/">Make your own Fiftyfifty!</a></p>
+            <div class="addthis_sharing_toolbox" data-url="http://fiftyfifty.video/~{{vidSet}}" data-title="{{title}}"></div>
+        </div>
+    </div>
+</div>
