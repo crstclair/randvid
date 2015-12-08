@@ -8,6 +8,7 @@ var cache = LRU( {max: 100000, length: function(n){return n.length}});
 var developmentEnvironment = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
 var dynamoTable = developmentEnvironment ? 'dev.randvid.videosets' : 'randvid.videosets';
 
+// Generates a random string of the specified length. Uses characters A-Z, a-z, and 0-9.
 function randString(length) {
   var characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   var res = "";
@@ -19,6 +20,8 @@ function randString(length) {
   return res;
 }
 
+// Given a string in the form mm:ss, returns the number of seconds.
+// Input must have 2 digit seconds and any at least one digit for the minutes
 function parseTime(timeString) {
   if(timeString.length === 0) {return 0;}
 
@@ -28,6 +31,7 @@ function parseTime(timeString) {
   return parseInt(matches[1]) * 60 + parseInt(matches[2]);
 }
 
+// Parses out and returns the Youtube video id from a Youtube URL.
 var findVideoID = function(url) {
   var id = url.match(/youtube.+[&?]v=([A-Za-z0-9_-]{11})/)
       || url.match(/youtu\.be\/([A-Za-z0-9_-]{11})/) //URL from YT link shortener
@@ -37,7 +41,8 @@ var findVideoID = function(url) {
   return null;
 };
 
-//second parameter of callback is sent directly to the renderer.
+// Retrieves set information from data or cache given the setID and video.
+// second parameter of callback is sent directly to the renderer.
 var getVideoInfo = function(setID, opt, callback) {
   var options = {
     'a': {videoAttributeName: 'VidA', timeAttributeName: 'TimeA', alt: 'b'},
