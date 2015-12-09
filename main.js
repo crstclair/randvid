@@ -16,8 +16,13 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 app.set('trust proxy', 'loopback');
 
+//load app configuration
 var configString = fs.readFileSync(process.env.CONFIG || 'config.json', {encoding: 'UTF-8'}); //Load configuration file
 var config = JSON.parse(configString);
+
+//configuration defaults
+config.domain = config.domain || "example.com";
+config.analytics = config.analytics || "<!--No analytics set in configuration-->";
 
 var analyticsString = app.get('env') === 'development' ? '<!--No analytics for dev environment-->' : config.analytics;
 hbs.registerHelper('analytics', function() {
