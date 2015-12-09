@@ -5,6 +5,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var hbs = require('hbs');
+var fs = require('fs');
 
 var routes = require('./routes/index');
 
@@ -15,15 +16,10 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 app.set('trust proxy', 'loopback');
 
-var analyticsString = app.get('env') === 'development' ? '<!--No analytics for development environment-->' :
-  "<script>\n" +
-  "  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){\n" +
-  "  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),\n" +
-  "  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\n" +
-  "  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');\n\n" +
-  "  ga('create', 'UA-70425326-1', 'auto');\n" +
-  "  ga('send', 'pageview');\n\n" +
-  "</script>";
+var configString = fs.readFileSync('config.json', {encoding: 'UTF-8'});
+var config = JSON.parse(configString);
+
+var analyticsString = app.get('env') === 'development' ? '<!--No analytics for dev environment-->' : config.analytics;
 hbs.registerHelper('analytics', function() {
   return analyticsString;
 });
@@ -35,6 +31,12 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+//set configuration for every request
+app.use(function(req, res, next) {
+  req.config = config;
+  return next();
+});
 
 app.use('/', routes);
 
