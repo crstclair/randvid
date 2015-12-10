@@ -23,6 +23,7 @@ var config = JSON.parse(configString);
 //configuration defaults
 config.domain = config.domain || "example.com";
 config.analytics = config.analytics || "<!--No analytics set in configuration-->";
+config.addthisID = config.addthisID || "Addthis pubID not set";
 
 var analyticsString = app.get('env') === 'development' ? '<!--No analytics for dev environment-->' : config.analytics;
 hbs.registerHelper('analytics', function() {
