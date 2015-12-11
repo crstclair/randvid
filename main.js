@@ -17,8 +17,16 @@ app.set('view engine', 'hbs');
 app.set('trust proxy', 'loopback');
 
 //load app configuration
-var configString = fs.readFileSync(process.env.CONFIG || 'config.json', {encoding: 'UTF-8'}); //Load configuration file
-var config = JSON.parse(configString);
+var config, configString;
+try {
+  configString = fs.readFileSync(process.env.CONFIG || 'config.json', {encoding: 'UTF-8'}); //Load configuration file
+  config = JSON.parse(configString);
+}
+catch(ex) {
+  console.log("Could not load configuration: " + ex.message);
+  console.log("Using defaults");
+  config = {};
+}
 
 //configuration defaults
 config.domain = config.domain || "example.com";
