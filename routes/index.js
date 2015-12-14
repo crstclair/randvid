@@ -194,6 +194,8 @@ router.post('/', function(req, res, next) {
 
       res.render('accepted', {
         title: "Videos Accepted",
+        domain: req.config.domain,
+        addthisID: req.config.addthisID,
         setTitle: title,
         vidSet: setID
       });
@@ -208,6 +210,8 @@ router.get('/~:vidID/:opt', function(req, res, next) {
     if(err) {return next(err);}
     if(!info) {return next();} //setID not found
 
+    info.domain = req.config.domain;
+    info.addthisID = req.config.addthisID;
     res.render('video', info);
   });
 });
@@ -220,6 +224,8 @@ router.get('/~:vidID', function(req, res, next) {
     if(err) {return next(err);}
     if(!info) {return next();} //setID not found
 
+    info.domain = req.config.domain;
+    info.addthisID = req.config.addthisID;
     res.render('video', info);
   });
 });
