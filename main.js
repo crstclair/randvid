@@ -6,10 +6,24 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var hbs = require('hbs');
 var fs = require('fs');
+var AWS = require('aws-sdk');
 
 var routes = require('./routes/index');
 
 var app = express();
+var cloudwatchlogs = new AWS.CloudWatchLogs({apiVersion: '2014-03-28', region: 'us-east-1'});
+
+//CloudWatch logging configuration
+var cloudwatchStreamName = 'randvid/' + process.pid;
+var cloudwatchLogToken; //TODO: fix token for async
+cloudwatchlogs.createLogStream({
+  logGroupName: '/aws/test', //TODO: use better group name
+  logStreamName: cloudwatchStreamName
+}, function (err, data) {
+  if(err) {return console.error(err);}
+  console.log("Created stream " + cloudwatchStreamName);
+  console.log(data);
+});
 
 // express configuration
 app.set('views', path.join(__dirname, 'views'));
@@ -80,9 +94,31 @@ if (app.get('env') === 'development') {
 app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error', {
-    message: err.message,
-    error: {}
+    message: err.message
   });
+
+  //error logging
+  var errInfo = {
+    time: Date.now(),
+    status: err.status,
+    message: err.message,
+    stack: err.stack
+  }
+  cloudwatchlogs.putLogEvents({
+    logEvents: [
+      {
+        message: JSON.stringify(errInfo),
+        timestamp: Date.now()
+      }
+    ],
+    logGroupName: '/aws/test',
+    logStreamName: cloudwatchStreamName,
+    sequenceToken: cloudwatchLogToken
+  }, function(err2, data) {
+    if(err2) {return console.error(JSON.stringify(err2));}
+    console.log(JSON.stringify(data));
+    cloudwatchLogToken = data.nextSequenceToken;
+  })
 });
 
 
