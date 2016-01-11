@@ -13,18 +13,6 @@ var routes = require('./routes/index');
 var app = express();
 var cloudwatchlogs = new AWS.CloudWatchLogs({apiVersion: '2014-03-28', region: 'us-east-1'});
 
-//CloudWatch logging configuration
-var cloudwatchStreamName = 'randvid/' + process.pid;
-var cloudwatchLogToken; //TODO: fix token for async
-cloudwatchlogs.createLogStream({
-  logGroupName: '/aws/test', //TODO: use better group name
-  logStreamName: cloudwatchStreamName
-}, function (err, data) {
-  if(err) {return console.error(err);}
-  console.log("Created stream " + cloudwatchStreamName);
-  console.log(data);
-});
-
 // express configuration
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
@@ -98,12 +86,22 @@ app.use(function(err, req, res, next) {
   });
 
   //error logging
+  var dateNow = new Date();
+  var cloudwatchStreamName = "randvid/" + dateNow.getUTCFullYear() + "/" + dateNow.getUTCMonth() + "/" + dateNow.getUTCDate() + "/" + Math.floor(Math.random() * 1000000000000);
   var errInfo = {
     time: Date.now(),
     status: err.status,
     message: err.message,
     stack: err.stack
-  }
+  };
+  cloudwatchlogs.createLogStream({
+    logGroupName: '/aws/test', //TODO: use better group name
+    logStreamName: cloudwatchStreamName
+  }, function (err2, data) {
+    if(err2) {return console.error(err2);}
+    console.log("Created stream " + cloudwatchStreamName);
+    console.log(data);
+  });
   cloudwatchlogs.putLogEvents({
     logEvents: [
       {
