@@ -86,35 +86,38 @@ app.use(function(err, req, res, next) {
   });
 
   //error logging
-  var dateNow = new Date();
-  var cloudwatchStreamName = "randvid/" + dateNow.getUTCFullYear() + "/" + (dateNow.getUTCMonth() + 1) + "/" + dateNow.getUTCDate() + "/" + Math.floor(Math.random() * 1000000000000);
-  var errInfo = {
-    time: Date.now(),
-    status: err.status,
-    message: err.message,
-    stack: err.stack
-  };
-  cloudwatchlogs.createLogStream({
-    logGroupName: '/aws/test', //TODO: use better group name
-    logStreamName: cloudwatchStreamName
-  }, function (err2, data) {
-    if(err2) {return console.error(err2);}
-    console.log("Created stream " + cloudwatchStreamName);
-    console.log(data);
-    cloudwatchlogs.putLogEvents({
-      logEvents: [
-        {
-          message: JSON.stringify(errInfo),
-          timestamp: Date.now()
-        }
-      ],
-      logGroupName: '/aws/test',
+  if(err.status !== 404)
+  {
+    var dateNow = new Date();
+    var cloudwatchStreamName = "randvid/" + dateNow.getUTCFullYear() + "/" + (dateNow.getUTCMonth() + 1) + "/" + dateNow.getUTCDate() + "/" + Math.floor(Math.random() * 1000000000000);
+    var errInfo = {
+      time: Date.now(),
+      status: (err.status || 500),
+      message: err.message,
+      stack: err.stack
+    };
+    cloudwatchlogs.createLogStream({
+      logGroupName: '/aws/test', //TODO: use better group name
       logStreamName: cloudwatchStreamName
-    }, function(err2, data) {
-      if(err2) {return console.error(JSON.stringify(err2));}
-      console.log(JSON.stringify(data));
+    }, function (err2, data) {
+      if(err2) {return console.error(err2);}
+      console.log("Created stream " + cloudwatchStreamName);
+      console.log(data);
+      cloudwatchlogs.putLogEvents({
+        logEvents: [
+          {
+            message: JSON.stringify(errInfo),
+            timestamp: Date.now()
+          }
+        ],
+        logGroupName: '/aws/test',
+        logStreamName: cloudwatchStreamName
+      }, function(err2, data) {
+        if(err2) {return console.error(JSON.stringify(err2));}
+        console.log(JSON.stringify(data));
+      });
     });
-  });
+  }
 });
 
 
