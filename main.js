@@ -6,10 +6,12 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var hbs = require('hbs');
 var fs = require('fs');
+var AWS = require('aws-sdk');
 
 var routes = require('./routes/index');
 
 var app = express();
+var cloudwatchlogs = new AWS.CloudWatchLogs({apiVersion: '2014-03-28', region: 'us-east-1'});
 
 // express configuration
 app.set('views', path.join(__dirname, 'views'));
@@ -32,6 +34,15 @@ catch(ex) {
 config.domain = config.domain || "example.com";
 config.analytics = config.analytics || "<!--No analytics set in configuration-->";
 config.addthisID = config.addthisID || "Addthis pubID not set";
+config.logGroup = config.logGroup || "/randvid";
+
+//Logging for uncaught exceptions
+process.on('uncaughtException', function (err) {
+  console.error(err.stack);
+  logErr(config.logGroup, 'randvid/crash/', err, function() {
+    process.exit(1);
+  });
+});
 
 var analyticsString = app.get('env') === 'development' ? '<!--No analytics for dev environment-->' : config.analytics;
 hbs.registerHelper('analytics', function() {
@@ -80,10 +91,48 @@ if (app.get('env') === 'development') {
 app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error', {
-    message: err.message,
-    error: {}
+    message: err.message
   });
+
+  //error logging
+  if(err.status !== 404)
+  {
+    err.status = err.status || 500;
+    logErr(config.logGroup, 'randvid/err/', err, function() {});
+  }
 });
 
+function logErr(groupName, streamPrefix, logErr, callback) {
+  var dateNow = new Date();
+  var cloudwatchStreamName = streamPrefix + dateNow.getUTCFullYear() + "/" + (dateNow.getUTCMonth() + 1) + "/" + dateNow.getUTCDate() + "/" + Math.floor(Math.random() * 1000000000000);
+  var errInfo = {
+    time: Date.now(),
+    status: logErr.status,
+    message: logErr.message,
+    stack: logErr.stack
+  };
+  cloudwatchlogs.createLogStream({
+    logGroupName: groupName,
+    logStreamName: cloudwatchStreamName
+  }, function (err2, data) {
+    if(err2) {callback(err2); return console.error(err2);}
+    console.log("Created stream " + cloudwatchStreamName);
+    console.log(data);
+    cloudwatchlogs.putLogEvents({
+      logEvents: [
+        {
+          message: JSON.stringify(errInfo),
+          timestamp: Date.now()
+        }
+      ],
+      logGroupName: groupName,
+      logStreamName: cloudwatchStreamName
+    }, function(err2, data) {
+      if(err2) {callback(err2); return console.error(JSON.stringify(err2));}
+      console.log(JSON.stringify(data));
+      callback();
+    });
+  });
+}
 
 module.exports = app;
